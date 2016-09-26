@@ -9,8 +9,12 @@ class ClassStub implements Stub {
   use AppNamespaceDetectorTrait;
 
   /**
-   * The type of class being generated, e.g. just a 'class',
-   * 'model', 'controller' etc.
+   * @var NameCreator $nameCreator
+   */
+  private $nameCreator;
+
+  /**
+   * The type of class being generated, e.g. 'model', 'controller' etc.
    * This attribute must be set by the class that extends this
    * class to properly determine the corresponding stubs path.
    *
@@ -19,40 +23,17 @@ class ClassStub implements Stub {
   private $type;
 
   /**
-   * The name of the stub file under 'resources/stubs' directory.
-   * This attribute will be used to construct source file path.
+   * The raw name of the class.
    *
-   * @var string $name
+   * @var string $rawName
+   * @see ClassStub::getName()
    */
   private $name;
 
   /**
-   * @var string $classNamespace
+   * @var string $namespace
    */
-  private $classNamespace;
-
-  /**
-   * @var string $className
-   */
-  private $className;
-
-  /**
-   * The class that extends this class may override
-   * this attribute to affect calculated class name
-   * for generated class from stub.
-   *
-   * @var string $classNamePrefix
-   */
-  protected $classNamePrefix = '';
-
-  /**
-   * The class that extends this class may override
-   * this attribute to affect calculated class name
-   * for generated class from stub.
-   *
-   * @var string $classNameSuffix
-   */
-  protected $classNameSuffix = '';
+  private $namespace;
 
   /**
    * @var array $imports
@@ -74,44 +55,7 @@ class ClassStub implements Stub {
    */
   protected $traits = [];
 
-  /**
-   * Stub constructor.
-   *
-   * @throws \Exception
-   */
-  public function __construct() {
-    // Since ClassStub does not have any specific type, set it to empty string
-    $this->setType('');
-
-//    // Set namespace right after setting the type
-//    //
-//    // Combine the application's namespace with the namespace
-//    //for the type from stubs.php config file
-//    $namespaceOfType = config('stubs.namespaces.' . $this->type, null);
-//
-//    if (null === $namespaceOfType) {
-//      throw new \Exception(
-//        'Either Stubs config was not published or the value of \'stubs.namespaces.' . $this->type .
-//        '\' is not valid. Because of this it is not possible to get correct namespace for ' . $this->type .
-//        ' type of stub.'
-//      );
-//    }
-//
-//    $namespace = trim($this->getAppNamespace() . '\\' . $namespaceOfType, '\\');
-//
-//    // Remove trailing slash
-//    $this->classNamespace = str_replace_last('\\', '', $namespace);
-    $this->classNamespace = '';
-
-    // Update imports, extends, implements and traits immediately after setting class' namespace
-    $this->imports = Helpers::truncateFullyQualifiedNamespace($this->classNamespace, $this->imports, true);
-
-    $namespaceAndImports = array_merge([$this->classNamespace], $this->imports);
-
-    $this->extends = Helpers::truncateFullyQualifiedNamespace($namespaceAndImports, $this->extends);
-    $this->implements = Helpers::truncateFullyQualifiedNamespace($namespaceAndImports, $this->implements, true);
-    $this->traits = Helpers::truncateFullyQualifiedNamespace($namespaceAndImports, $this->traits, true);
-  }
+  private $isDataPrepared = false;
 
   public function getType() : string {
     return $this->type;
@@ -119,24 +63,79 @@ class ClassStub implements Stub {
 
   public function setType(string $type) {
     $this->type = $type;
+
+    $this->resolveNameCreator();
   }
 
+  public function setNamespace(string $namespace = null) {
+    if (null === $namespace) {
+      $namespaceOfType = config('stubs.namespaces.' . $this->getType(), null);
+
+      if (null === $namespaceOfType) {
+        throw new \Exception(
+          'Either Stubs config was not published or the value of \'stubs.namespaces.' . $this->type .
+          '\' is not valid. Because of this it is not possible to get correct namespace for ' . $this->type .
+          ' type of stub.'
+        );
+      }
+
+      $namespace = trim($this->getAppNamespace() . '\\' . $namespaceOfType, '\\');
+      $namespace = str_replace_last('\\', '', $namespace);
+    }
+
+    $this->namespace = $namespace;
+  }
+
+  /**
+   * Get name with prefix and suffix concatenated.
+   *
+   * @return string
+   */
   public function getName() : string {
     return $this->name;
   }
 
   public function setName(string $name) {
-    $this->name = $name;
+    $this->name = $this->nameCreator->create($name);
+  }
+
+  /**
+   * The command class which extends this class MUST call this method
+   * after changing any of the class' attributes (i.e. imports,
+   * extends, implements, traits)
+   */
+  public function invalidateData() {
+    $this->isDataPrepared = false;
   }
 
   public function getData() {
+    if (!$this->isDataPrepared) {
+      $this->prepareData();
+    }
+
     return [
-      'namespace' => $this->classNamespace,
+      'namespace' => $this->namespace,
       'imports' => $this->imports,
-      'name' => $this->className,
+      'name' => $this->getName(),
       'extends' => $this->extends,
       'implements' => $this->implements,
       'traits' => $this->traits,
     ];
+  }
+
+  private function resolveNameCreator() {
+    $this->nameCreator = app('stubs.name_creator.' . $this->getType());
+  }
+
+  private function prepareData() {
+    $this->imports = Helpers::truncateFullyQualifiedNamespace($this->namespace, $this->imports, true);
+
+    $namespaceAndImports = array_merge([$this->namespace], $this->imports);
+
+    $this->extends = Helpers::truncateFullyQualifiedNamespace($namespaceAndImports, $this->extends);
+    $this->implements = Helpers::truncateFullyQualifiedNamespace($namespaceAndImports, $this->implements, true);
+    $this->traits = Helpers::truncateFullyQualifiedNamespace($namespaceAndImports, $this->traits, true);
+
+    $this->isDataPrepared = true;
   }
 }

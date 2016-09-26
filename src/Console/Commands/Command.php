@@ -123,7 +123,7 @@ abstract class Command extends IlluminateCommand implements ProvidesStub, Intera
       'php',
       base_path(),
       $relativePathToTypeDirectory,
-      $this->getBaseStubFilename() // TODO bunun command name göre yazılması lazım
+      $this->getStub()->getName()
     );
 
     return $a;

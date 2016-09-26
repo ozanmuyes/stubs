@@ -7,6 +7,7 @@ use Ozanmuyes\Stubs\Console\Commands\StubCommand;
 use Ozanmuyes\Stubs\Contracts\Stub;
 use Ozanmuyes\Stubs\ClassStub;
 use Ozanmuyes\Stubs\Helpers;
+use Ozanmuyes\Stubs\ModelNameCreator;
 
 class StubsServiceProvider extends ServiceProvider {
   /**
@@ -41,6 +42,7 @@ class StubsServiceProvider extends ServiceProvider {
    */
   public function register() {
     $this->registerStubClasses();
+    $this->registerNameCreatorClasses();
 
     $this->registerStubsViewFinder();
 
@@ -57,10 +59,22 @@ class StubsServiceProvider extends ServiceProvider {
 //      ->needs(Stub::class)
 //      ->give(ModelStub::class);
 
-    // Add more stub type's binding here
+    // Add more conditional binding here
 
     // Finally bind ClassStub class as fallback
     $this->app->bind(Stub::class, ClassStub::class);
+  }
+
+  private function registerNameCreatorClasses() {
+    $this->app->bind('stubs.name_creator.model', ModelNameCreator::class);
+
+    // Add more stub type's binding here
+
+//    $this->app->when(ModelStub::class)
+//      ->needs(NameCreator::class)
+//      ->give(ModelNameCreator::class);
+
+    // Add more conditional binding here
   }
 
   private function registerStubsViewFinder() {
@@ -98,7 +112,7 @@ class StubsServiceProvider extends ServiceProvider {
       }
 
       return
-        '<?php foreach(' . $param . ' as $item) { echo "use " . $item . ";" . PHP_EOL; } ?>';
+        '<?php foreach(' . $param . ' as $item) { echo "use " . $item . ";" . PHP_EOL . PHP_EOL; } ?>';
     });
 
     $blade->directive('class', function ($param) {

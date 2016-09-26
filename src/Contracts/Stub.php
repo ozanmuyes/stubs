@@ -2,5 +2,5 @@
 
 namespace Ozanmuyes\Stubs\Contracts;
 
-interface Stub extends HasName, HasType, ProvidesData {
+interface Stub extends HasType, ConfiguresNamespace, HasName, ProvidesData {
 }

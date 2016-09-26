@@ -31,14 +31,17 @@ class StubCommand extends Command {
   protected function beforeHandle() {
     $stub = $this->getStub();
 
-    // Set stub type
+    // Set stub's type according to passed argument
     $stub->setType($this->argument('type'));
 
-    // Set stub (class) name
-    $className = $this->argument('name') ?: $this->option('named');
+    // Set stub's namespace according to stub's type
+    $stub->setNamespace();
+
+    // Set stub's (class) name
+    $name = $this->argument('name') ?: $this->option('named');
 
     // TODO Write more specific exception class
-    if (null === $className) {
+    if (null === $name) {
       /**
        * This kind of exception caused by the developer of the package.
        * Check all the classes that extends this class and ensure
@@ -47,7 +50,7 @@ class StubCommand extends Command {
       throw new \Exception('Class name was not specified');
     }
 
-    $stub->setName($className);
+    $stub->setName($name);
 
     // TODO Check all required arguments
   }
