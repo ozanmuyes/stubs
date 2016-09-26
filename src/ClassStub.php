@@ -3,6 +3,7 @@
 namespace Ozanmuyes\Stubs;
 
 use Illuminate\Console\AppNamespaceDetectorTrait;
+use Ozanmuyes\Stubs\Contracts\NameCreators\NameCreator;
 use Ozanmuyes\Stubs\Contracts\Stub;
 
 class ClassStub implements Stub {
@@ -124,7 +125,7 @@ class ClassStub implements Stub {
   }
 
   private function resolveNameCreator() {
-    $this->nameCreator = app('stubs.name_creator.' . $this->getType());
+    $this->nameCreator = app('stubs.name_creators.' . $this->getType());
   }
 
   private function prepareData() {

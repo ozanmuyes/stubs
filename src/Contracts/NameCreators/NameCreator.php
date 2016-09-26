@@ -1,6 +1,6 @@
 <?php
 
-namespace Ozanmuyes\Stubs;
+namespace Ozanmuyes\Stubs\Contracts\NameCreators;
 
 interface NameCreator {
   function setPrefix(string $namePrefix);

@@ -7,7 +7,7 @@ use Ozanmuyes\Stubs\Console\Commands\StubCommand;
 use Ozanmuyes\Stubs\Contracts\Stub;
 use Ozanmuyes\Stubs\ClassStub;
 use Ozanmuyes\Stubs\Helpers;
-use Ozanmuyes\Stubs\ModelNameCreator;
+use Ozanmuyes\Stubs\NameCreators\ModelNameCreator;
 
 class StubsServiceProvider extends ServiceProvider {
   /**
@@ -66,7 +66,7 @@ class StubsServiceProvider extends ServiceProvider {
   }
 
   private function registerNameCreatorClasses() {
-    $this->app->bind('stubs.name_creator.model', ModelNameCreator::class);
+    $this->app->bind('stubs.name_creators.model', ModelNameCreator::class);
 
     // Add more stub type's binding here
 
